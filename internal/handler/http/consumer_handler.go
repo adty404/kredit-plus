@@ -40,32 +40,21 @@ func NewConsumerHandler(uc usecase.ConsumerUsecase) *ConsumerHandler {
 // @Failure      500           {object}  map[string]interface{}
 // @Router       /consumers [post]
 func (h *ConsumerHandler) CreateConsumer(c *gin.Context) {
-	// Dapatkan data teks dari form-data
-	nik := c.PostForm("nik")
-	fullName := c.PostForm("full_name")
-	legalName := c.PostForm("legal_name")
-	tempatLahir := c.PostForm("tempat_lahir")
-	tanggalLahir := c.PostForm("tanggal_lahir")
-	gajiStr := c.PostForm("gaji")
-
-	// Validasi input sederhana
-	if nik == "" || fullName == "" || legalName == "" || tempatLahir == "" || tanggalLahir == "" || gajiStr == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required text fields"})
+	var input usecase.CreateConsumerFormInput
+	// Menggunakan c.ShouldBind() untuk binding dan validasi form-data.
+	if err := c.ShouldBind(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed", "details": err.Error()})
 		return
 	}
 
-	// Dapatkan file dari form-data (opsional)
-	fotoKtp, _ := c.FormFile("foto_ktp")
-	fotoSelfie, _ := c.FormFile("foto_selfie")
-
-	// Simpan file yang di-upload dan dapatkan path-nya
-	fotoKtpPath, err := SaveUploadedFile(c, fotoKtp, nik, "ktp")
+	// Simpan file yang di-upload.
+	fotoKtpPath, err := SaveUploadedFile(c, input.FotoKtp, input.Nik, "ktp")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save foto_ktp file", "details": err.Error()})
 		return
 	}
 
-	fotoSelfiePath, err := SaveUploadedFile(c, fotoSelfie, nik, "selfie")
+	fotoSelfiePath, err := SaveUploadedFile(c, input.FotoSelfie, input.Nik, "selfie")
 	if err != nil {
 		c.JSON(
 			http.StatusInternalServerError,
@@ -74,27 +63,33 @@ func (h *ConsumerHandler) CreateConsumer(c *gin.Context) {
 		return
 	}
 
-	// Konversi gaji dari string ke float64
-	gaji, err := strconv.ParseFloat(gajiStr, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format for gaji, must be a number"})
+	// Konversi nilai string dari form ke float64.
+	gaji, _ := strconv.ParseFloat(input.Gaji, 64)
+	overallCreditLimit, _ := strconv.ParseFloat(input.OverallCreditLimit, 64)
+
+	if overallCreditLimit <= 0 {
+		c.JSON(
+			http.StatusBadRequest,
+			gin.H{"error": "Validation failed", "details": "overall_credit_limit must be greater than 0"},
+		)
 		return
 	}
 
-	// Siapkan input untuk usecase
-	input := usecase.CreateConsumerInput{
-		Nik:            nik,
-		FullName:       fullName,
-		LegalName:      legalName,
-		TempatLahir:    tempatLahir,
-		TanggalLahir:   tanggalLahir,
-		Gaji:           gaji,
-		FotoKtpPath:    fotoKtpPath,
-		FotoSelfiePath: fotoSelfiePath,
+	// Siapkan input untuk usecase.
+	usecaseInput := usecase.CreateConsumerInput{
+		Nik:                input.Nik,
+		FullName:           input.FullName,
+		LegalName:          input.LegalName,
+		TempatLahir:        input.TempatLahir,
+		TanggalLahir:       input.TanggalLahir,
+		Gaji:               gaji,
+		OverallCreditLimit: overallCreditLimit,
+		FotoKtpPath:        fotoKtpPath,
+		FotoSelfiePath:     fotoSelfiePath,
 	}
 
-	// Panggil usecase
-	consumer, err := h.consumerUsecase.CreateConsumer(input)
+	// Panggil usecase.
+	consumer, err := h.consumerUsecase.CreateConsumer(usecaseInput)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return

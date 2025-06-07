@@ -37,21 +37,22 @@ func (uc *consumerUsecase) CreateConsumer(input CreateConsumerInput) (*domain.Co
 	// Parsing tanggal lahir dari string ke time.Time
 	dob, err := time.Parse("2006-01-02", input.TanggalLahir)
 	if err != nil {
-		return nil, fmt.Errorf("invalid date format for tanggal_lahir, please use YYYY-MM-DD")
+		return nil, fmt.Errorf("invalid date format for tanggal_lahir, please use yyyy-MM-dd")
 	}
 
 	jsonDob := domain.JSONDate(dob)
 
 	// Membuat objek domain.Consumer baru dari input.
 	consumer := &domain.Consumer{
-		Nik:          input.Nik,
-		FullName:     input.FullName,
-		LegalName:    input.LegalName,
-		TempatLahir:  input.TempatLahir,
-		TanggalLahir: &jsonDob,
-		Gaji:         input.Gaji,
-		FotoKtp:      input.FotoKtpPath,    // Menyimpan path file KTP
-		FotoSelfie:   input.FotoSelfiePath, // Menyimpan path file Selfie
+		Nik:                input.Nik,
+		FullName:           input.FullName,
+		LegalName:          input.LegalName,
+		TempatLahir:        input.TempatLahir,
+		TanggalLahir:       &jsonDob,
+		Gaji:               input.Gaji,
+		OverallCreditLimit: input.OverallCreditLimit,
+		FotoKtp:            input.FotoKtpPath,
+		FotoSelfie:         input.FotoSelfiePath,
 	}
 
 	if err := uc.repo.Save(consumer); err != nil {
