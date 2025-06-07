@@ -24,12 +24,21 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	// === Dependency Injection ===
 	// Repository
 	consumerRepo := postgres.NewConsumerRepository(db)
+	consumerCreditLimitRepo := postgres.NewConsumerCreditLimitRepository(db)
 
 	// Usecase
 	consumerUsecase := usecase.NewConsumerUsecase(consumerRepo)
+	consumerCreditLimitUsecase := usecase.NewConsumerCreditLimitUsecase(
+		consumerCreditLimitRepo,
+		consumerRepo,
+	)
 
 	// Handler
 	consumerHandler := NewConsumerHandler(consumerUsecase)
+	consumerCreditLimitHandler := NewConsumerCreditLimitHandler(
+		consumerCreditLimitUsecase,
+		consumerUsecase,
+	)
 
 	// === Pendaftaran Rute API ===
 	api := router.Group("/api/v1")
@@ -41,6 +50,11 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 			consumerRoutes.GET("/:id", consumerHandler.GetConsumerByID)
 			consumerRoutes.PUT("/:id", consumerHandler.UpdateConsumer)
 			consumerRoutes.DELETE("/:id", consumerHandler.DeleteConsumer)
+		}
+
+		consumerCreditLimitRoutes := api.Group("/consumers/:consumer_id/credit-limits")
+		{
+			consumerCreditLimitRoutes.POST("", consumerCreditLimitHandler.CreateLimitForConsumer)
 		}
 	}
 
