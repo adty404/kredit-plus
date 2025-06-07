@@ -3,14 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/adty404/kredit-plus/internal/platform/database"
-	"github.com/adty404/kredit-plus/internal/platform/migration"
-	"github.com/adty404/kredit-plus/internal/platform/seeder"
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
+
+	httphandler "github.com/adty404/kredit-plus/internal/handler/http"
+	"github.com/adty404/kredit-plus/internal/platform/database"
+	"github.com/adty404/kredit-plus/internal/platform/migration"
+	"github.com/adty404/kredit-plus/internal/platform/seeder"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -41,17 +43,8 @@ func main() {
 		return
 	}
 
-	fmt.Println("Application startup completed successfully!")
-
-	// 6. Inisialisasi router Gin
-	router := gin.Default()
-
-	// 7. Tambahkan route untuk health check
-	router.GET(
-		"/ping", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"message": "pong"})
-		},
-	)
+	// 6. Setup Router HTTP
+	router := httphandler.SetupRouter(db)
 
 	// 8. Tambahkan route untuk mendapatkan informasi tentang aplikasi
 	port := os.Getenv("SERVE_PORT")
@@ -59,8 +52,10 @@ func main() {
 		port = "8080"
 	}
 
+	fmt.Println("Application startup completed successfully!")
+	log.Printf("Starting the HTTP server on http://localhost:%s\n", port)
+
 	// 9. Mulai HTTP server
-	log.Println("Starting the HTTP server on port", port)
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatalf("Failed to start HTTP server: %v", err)
 	}
