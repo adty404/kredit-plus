@@ -27,13 +27,15 @@ func createBudi(db *gorm.DB) error {
 	// Tentukan tanggal lahir
 	tanggalLahirBudi, _ := time.Parse("2006-01-02", "1990-05-15")
 
+	jsonDob := domain.JSONDate(tanggalLahirBudi)
+
 	// Data konsumen
 	budi := domain.Consumer{
 		Nik:                "3271011505900001", // NIK unik
 		FullName:           "Budi",
 		LegalName:          "Budi",
 		TempatLahir:        "Bandung",
-		TanggalLahir:       &tanggalLahirBudi,
+		TanggalLahir:       &jsonDob,
 		Gaji:               8000000,
 		OverallCreditLimit: 23200000, // Plafon kredit total Budi
 	}
@@ -73,13 +75,15 @@ func createAnnisa(db *gorm.DB) error {
 	// Tentukan tanggal lahir
 	tanggalLahirAnnisa, _ := time.Parse("2006-01-02", "1990-05-15")
 
+	jsonDob := domain.JSONDate(tanggalLahirAnnisa)
+
 	// Data konsumen
 	annisa := domain.Consumer{
 		Nik:                "3271011505900002", // NIK unik
 		FullName:           "Annisa",
 		LegalName:          "Annisa",
 		TempatLahir:        "Bandung",
-		TanggalLahir:       &tanggalLahirAnnisa,
+		TanggalLahir:       &jsonDob,
 		Gaji:               8000000,
 		OverallCreditLimit: 23200000, // Plafon kredit total Annisa
 	}
