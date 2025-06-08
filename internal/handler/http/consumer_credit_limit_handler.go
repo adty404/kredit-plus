@@ -23,7 +23,7 @@ func NewConsumerCreditLimitHandler(
 }
 
 func (h *ConsumerCreditLimitHandler) CreateLimitForConsumer(c *gin.Context) {
-	idStr := c.Param("consumer_id")
+	idStr := c.Param("id")
 	consumerID, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid consumer ID format"})

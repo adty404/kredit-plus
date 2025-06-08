@@ -1,7 +1,11 @@
 package domain
 
+import "gorm.io/gorm"
+
 type (
 	ConsumerRepository interface {
+		WithTx(tx *gorm.DB) ConsumerRepository
+		FindByIDForUpdate(id uint) (*Consumer, error)
 		Save(consumer *Consumer) error
 		Update(id uint, updates map[string]interface{}) error
 		FindByID(id uint) (*Consumer, error)

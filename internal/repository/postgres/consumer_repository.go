@@ -3,6 +3,7 @@ package postgres
 import (
 	"github.com/adty404/kredit-plus/internal/domain"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // consumerRepository adalah implementasi konkret dari domain.ConsumerRepository untuk database PostgreSQL.
@@ -13,6 +14,20 @@ type consumerRepository struct {
 // NewConsumerRepository adalah factory function untuk membuat instance baru dari consumerRepository.
 func NewConsumerRepository(db *gorm.DB) domain.ConsumerRepository {
 	return &consumerRepository{db: db}
+}
+
+func (r *consumerRepository) WithTx(tx *gorm.DB) domain.ConsumerRepository {
+	return &consumerRepository{db: tx}
+}
+
+// FindByIDForUpdate mencari konsumen berdasarkan ID dan mengunci barisnya menggunakan 'SELECT ... FOR UPDATE'.
+func (r *consumerRepository) FindByIDForUpdate(id uint) (*domain.Consumer, error) {
+	var consumer domain.Consumer
+	err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).First(&consumer, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &consumer, nil
 }
 
 // Save menyimpan data konsumen baru ke database.
