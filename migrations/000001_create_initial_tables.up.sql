@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Tabel consumers
 CREATE TABLE IF NOT EXISTS consumers (
     id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT UNIQUE NOT NULL,
     nik VARCHAR(16) UNIQUE NOT NULL,
     full_name VARCHAR(255) NOT NULL,
     legal_name VARCHAR(255),
@@ -24,8 +25,9 @@ CREATE TABLE IF NOT EXISTS consumers (
     foto_ktp VARCHAR(255),
     foto_selfie VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                             );
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_consumer_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
 
 -- Tabel consumer_credit_limits
 CREATE TABLE IF NOT EXISTS consumer_credit_limits (

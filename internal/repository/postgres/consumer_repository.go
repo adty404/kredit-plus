@@ -40,10 +40,20 @@ func (r *consumerRepository) Update(id uint, updates map[string]interface{}) err
 	return r.db.Model(&domain.Consumer{}).Where("id = ?", id).Updates(updates).Error
 }
 
+// FindByUserID mencari konsumen berdasarkan ID pengguna mereka.
+func (r *consumerRepository) FindByUserID(userID uint) (*domain.Consumer, error) {
+	var consumer domain.Consumer
+	err := r.db.Where("user_id = ?", userID).Preload("CreditLimits").Preload("Transactions").First(&consumer).Error
+	if err != nil {
+		return nil, err
+	}
+	return &consumer, nil
+}
+
 // FindByID mencari satu konsumen berdasarkan ID mereka.
 func (r *consumerRepository) FindByID(id uint) (*domain.Consumer, error) {
 	var consumer domain.Consumer
-	err := r.db.Preload("CreditLimits").Preload("Transactions").First(&consumer, id).Error
+	err := r.db.Preload("User").Preload("CreditLimits").Preload("Transactions").First(&consumer, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +73,7 @@ func (r *consumerRepository) FindByNIK(nik string) (*domain.Consumer, error) {
 // FindAll mengambil semua data konsumen dari database.
 func (r *consumerRepository) FindAll() ([]*domain.Consumer, error) {
 	var consumers []*domain.Consumer
-	err := r.db.Preload("CreditLimits").Preload("Transactions").Find(&consumers).Error
+	err := r.db.Preload("User").Preload("CreditLimits").Preload("Transactions").Find(&consumers).Error
 	if err != nil {
 		return nil, err
 	}

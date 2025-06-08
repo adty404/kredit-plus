@@ -1,48 +1,64 @@
 package http
 
 import (
+	"github.com/adty404/kredit-plus/internal/domain"
 	"github.com/adty404/kredit-plus/internal/usecase"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
 
+// TransactionHandler sekarang memiliki dependensi ke consumerRepo untuk validasi akses.
 type TransactionHandler struct {
-	uc usecase.TransactionUsecase
+	uc           usecase.TransactionUsecase
+	consumerRepo domain.ConsumerRepository // Dependensi baru
 }
 
-func NewTransactionHandler(uc usecase.TransactionUsecase) *TransactionHandler {
-	return &TransactionHandler{uc: uc}
+// NewTransactionHandler diperbarui untuk menerima dependensi baru.
+func NewTransactionHandler(uc usecase.TransactionUsecase, consumerRepo domain.ConsumerRepository) *TransactionHandler {
+	return &TransactionHandler{
+		uc:           uc,
+		consumerRepo: consumerRepo,
+	}
 }
 
-// CreateTransaction menangani pembuatan transaksi baru untuk seorang konsumen.
-// @Summary      Create a new transaction for a consumer
-// @Description  Membuat transaksi kredit baru berdasarkan OTR, tenor, dan detail lainnya.
-// @Tags         transactions
-// @Accept       json
-// @Produce      json
-// @Param        consumer_id  path      int                          true  "Consumer ID"
-// @Param        transaction  body      usecase.CreateTransactionInput  true  "Detail Transaksi"
-// @Success      201          {object}  map[string]interface{}
-// @Failure      400          {object}  map[string]interface{}
-// @Failure      404          {object}  map[string]interface{}
-// @Failure      422          {object}  map[string]interface{}
-// @Router       /consumers/{consumer_id}/transactions [post]
+// CreateTransaction sekarang memiliki validasi kontrol akses.
 func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
+	// Ambil consumer ID dari parameter URL.
 	idStr := c.Param("id")
-	consumerID, err := strconv.ParseUint(idStr, 10, 32)
+	consumerIDFromURL, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid consumer ID format"})
 		return
 	}
 
+	// Ambil data pengguna yang login dari context (di-set oleh middleware).
+	loggedInUserID := c.GetUint("userID")
+	loggedInUserRole := c.GetString("userRole")
+
+	// --- VALIDASI KONTROL AKSES ---
+	// Jika yang login bukan admin, pastikan dia hanya membuat transaksi untuk dirinya sendiri.
+	if loggedInUserRole != "admin" {
+		// Cari profil consumer yang terhubung dengan user yang sedang login.
+		consumer, err := h.consumerRepo.FindByUserID(loggedInUserID)
+		if err != nil || consumer.ID != uint(consumerIDFromURL) {
+			c.JSON(
+				http.StatusForbidden,
+				gin.H{"error": "You are not authorized to create a transaction for this consumer"},
+			)
+			return
+		}
+	}
+	// -----------------------------
+
+	// Jika validasi lolos, lanjutkan proses...
 	var input usecase.CreateTransactionInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data", "details": err.Error()})
 		return
 	}
 
-	transaction, err := h.uc.CreateTransaction(uint(consumerID), input)
+	transaction, err := h.uc.CreateTransaction(uint(consumerIDFromURL), input)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
@@ -51,24 +67,27 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Transaction created successfully", "data": transaction})
 }
 
-// GetTransactionsByConsumerID mengambil semua transaksi dari seorang konsumen.
-// @Summary      Get all transactions for a consumer
-// @Description  Mengambil daftar semua transaksi yang pernah dilakukan oleh seorang konsumen.
-// @Tags         transactions
-// @Produce      json
-// @Param        consumer_id  path      int  true  "Consumer ID"
-// @Success      200          {object}  map[string]interface{}
-// @Failure      404          {object}  map[string]interface{}
-// @Router       /consumers/{consumer_id}/transactions [get]
+// GetTransactionsByConsumerID juga memerlukan validasi kontrol akses.
 func (h *TransactionHandler) GetTransactionsByConsumerID(c *gin.Context) {
 	idStr := c.Param("id")
-	consumerID, err := strconv.ParseUint(idStr, 10, 32)
+	consumerIDFromURL, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid consumer ID format"})
 		return
 	}
 
-	transactions, err := h.uc.GetTransactionsByConsumerID(uint(consumerID))
+	loggedInUserID := c.GetUint("userID")
+	loggedInUserRole := c.GetString("userRole")
+
+	if loggedInUserRole != "admin" {
+		consumer, err := h.consumerRepo.FindByUserID(loggedInUserID)
+		if err != nil || consumer.ID != uint(consumerIDFromURL) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You are not authorized to view these transactions"})
+			return
+		}
+	}
+
+	transactions, err := h.uc.GetTransactionsByConsumerID(uint(consumerIDFromURL))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/adty404/kredit-plus/internal/auth"
 	"github.com/adty404/kredit-plus/internal/repository/postgres"
 	"github.com/adty404/kredit-plus/internal/usecase"
 	"github.com/gin-gonic/gin"
@@ -46,7 +47,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	userRepo := postgres.NewUserRepository(db)
 
 	// Usecase
-	consumerUsecase := usecase.NewConsumerUsecase(consumerRepo)
+	consumerUsecase := usecase.NewConsumerUsecase(db, consumerRepo, userRepo)
 	consumerCreditLimitUsecase := usecase.NewConsumerCreditLimitUsecase(
 		consumerCreditLimitRepo,
 		consumerRepo,
@@ -65,33 +66,42 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		consumerCreditLimitUsecase,
 		consumerUsecase,
 	)
-	transactionHandler := NewTransactionHandler(transactionUsecase)
+	transactionHandler := NewTransactionHandler(transactionUsecase, consumerRepo)
 	userHandler := NewUserHandler(userUsecase)
 
 	// === Pendaftaran Rute API ===
 	api := router.Group("/api/v1")
 	{
+		// Grup rute untuk otentikasi (Publik)
 		authRoutes := api.Group("/auth")
 		{
 			authRoutes.POST("/register", userHandler.Register)
 			authRoutes.POST("/login", userHandler.Login)
 		}
 
-		consumerRoutes := api.Group("/consumers")
+		// Grup rute yang memerlukan autentikasi JWT
+		protectedRoutes := api.Group("")
+		protectedRoutes.Use(auth.AuthMiddleware())
 		{
-			// Rute utama untuk consumers
-			consumerRoutes.POST("", consumerHandler.CreateConsumer)
-			consumerRoutes.GET("", consumerHandler.GetAllConsumers)
-			consumerRoutes.GET("/:id", consumerHandler.GetConsumerByID)
-			consumerRoutes.PUT("/:id", consumerHandler.UpdateConsumer)
-			consumerRoutes.DELETE("/:id", consumerHandler.DeleteConsumer)
+			// Grup rute untuk consumers di dalam grup terproteksi
+			consumerRoutes := protectedRoutes.Group("/consumers")
+			{
+				// Rute utama untuk consumers
+				consumerRoutes.POST("", auth.AuthorizeRole("admin"), consumerHandler.CreateConsumer)
+				consumerRoutes.GET("", auth.AuthorizeRole("admin"), consumerHandler.GetAllConsumers)
+				consumerRoutes.GET("/:id", consumerHandler.GetConsumerByID)
+				consumerRoutes.PUT("/:id", consumerHandler.UpdateConsumer)
+				consumerRoutes.DELETE("/:id", auth.AuthorizeRole("admin"), consumerHandler.DeleteConsumer)
 
-			// Rute untuk Credit Limit
-			consumerRoutes.POST("/:id/limits", consumerCreditLimitHandler.CreateLimitForConsumer)
+				consumerRoutes.POST(
+					"/:id/limits",
+					auth.AuthorizeRole("admin"),
+					consumerCreditLimitHandler.CreateLimitForConsumer,
+				)
 
-			// Rute untuk Transactions
-			consumerRoutes.POST("/:id/transactions", transactionHandler.CreateTransaction)
-			consumerRoutes.GET("/:id/transactions", transactionHandler.GetTransactionsByConsumerID)
+				consumerRoutes.POST("/:id/transactions", transactionHandler.CreateTransaction)
+				consumerRoutes.GET("/:id/transactions", transactionHandler.GetTransactionsByConsumerID)
+			}
 		}
 	}
 

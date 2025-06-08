@@ -4,6 +4,7 @@ import "time"
 
 type Consumer struct {
 	ID                 uint      `gorm:"primarykey"`
+	UserID             uint      `gorm:"unique;not null"`
 	Nik                string    `gorm:"type:varchar(16);unique;not null"`
 	FullName           string    `gorm:"type:varchar(255);not null"`
 	LegalName          string    `gorm:"type:varchar(255)"`
@@ -17,6 +18,7 @@ type Consumer struct {
 	UpdatedAt          time.Time
 
 	// Relasi
+	User         User                  `gorm:"foreignKey:UserID"`
 	CreditLimits []ConsumerCreditLimit `gorm:"foreignKey:ConsumerID"`
 	Transactions []Transaction         `gorm:"foreignKey:ConsumerID"`
 }
