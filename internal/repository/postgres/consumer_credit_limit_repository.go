@@ -15,6 +15,10 @@ func NewConsumerCreditLimitRepository(db *gorm.DB) *consumerCreditLimitRepositor
 	}
 }
 
+func (r *consumerCreditLimitRepository) WithTx(tx *gorm.DB) domain.ConsumerCreditLimitRepository {
+	return &consumerCreditLimitRepository{db: tx}
+}
+
 func (r *consumerCreditLimitRepository) Save(consumerCreditLimit *domain.ConsumerCreditLimit) error {
 	return r.db.Create(consumerCreditLimit).Error
 }

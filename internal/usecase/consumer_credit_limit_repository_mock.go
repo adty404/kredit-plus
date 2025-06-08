@@ -3,11 +3,16 @@ package usecase
 import (
 	"github.com/adty404/kredit-plus/internal/domain"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 // MockCreditLimitRepository adalah implementasi mock dari domain.ConsumerCreditLimitRepository.
 type MockCreditLimitRepository struct {
 	mock.Mock
+}
+
+func (m *MockCreditLimitRepository) WithTx(tx *gorm.DB) domain.ConsumerCreditLimitRepository {
+	return m
 }
 
 func (m *MockCreditLimitRepository) Save(limit *domain.ConsumerCreditLimit) error {

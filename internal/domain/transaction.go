@@ -2,6 +2,7 @@ package domain
 
 import "time"
 
+// Transaction merepresentasikan entitas transaksi/kontrak kredit.
 type Transaction struct {
 	ID                       uint      `gorm:"primarykey"`
 	ConsumerID               uint      `gorm:"not null"`
@@ -19,6 +20,7 @@ type Transaction struct {
 	NamaAsset                string    `gorm:"type:varchar(255)"`
 	JenisAsset               string    `gorm:"type:varchar(50)"`
 	StatusKontrak            string    `gorm:"type:varchar(30);not null"`
+	SumberTransaksi          string    `gorm:"type:varchar(100)"`
 	Catatan                  string    `gorm:"type:text"`
 	CreatedAt                time.Time
 	UpdatedAt                time.Time

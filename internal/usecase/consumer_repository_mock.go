@@ -3,10 +3,23 @@ package usecase
 import (
 	"github.com/adty404/kredit-plus/internal/domain"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 type MockConsumerRepository struct {
 	mock.Mock
+}
+
+func (m *MockConsumerRepository) WithTx(tx *gorm.DB) domain.ConsumerRepository {
+	return m
+}
+
+func (m *MockConsumerRepository) FindByIDForUpdate(id uint) (*domain.Consumer, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Consumer), args.Error(1)
 }
 
 // Implementasikan semua metode dari interface domain.ConsumerRepository

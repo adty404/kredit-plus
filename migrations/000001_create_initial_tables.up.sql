@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     nama_asset VARCHAR(255),
     jenis_asset VARCHAR(50),
     status_kontrak VARCHAR(30) NOT NULL,
+    sumber_transaksi VARCHAR(100),
     catatan TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

@@ -37,7 +37,7 @@ func createBudi(db *gorm.DB) error {
 		TempatLahir:        "Bandung",
 		TanggalLahir:       &jsonDob,
 		Gaji:               8000000,
-		OverallCreditLimit: 23200000, // Plafon kredit total Budi
+		OverallCreditLimit: 20000000, // Plafon kredit total Budi
 	}
 
 	if err := db.Where(domain.Consumer{Nik: budi.Nik}).FirstOrCreate(&budi).Error; err != nil {
@@ -55,10 +55,10 @@ func createBudi(db *gorm.DB) error {
 	}
 
 	creditLimits := []domain.ConsumerCreditLimit{
-		{ConsumerID: budi.ID, TenorMonths: 1, CreditLimit: 100000},
-		{ConsumerID: budi.ID, TenorMonths: 2, CreditLimit: 200000},
-		{ConsumerID: budi.ID, TenorMonths: 3, CreditLimit: 500000},
-		{ConsumerID: budi.ID, TenorMonths: 6, CreditLimit: 700000},
+		{ConsumerID: budi.ID, TenorMonths: 1, CreditLimit: 2000000},
+		{ConsumerID: budi.ID, TenorMonths: 2, CreditLimit: 3500000},
+		{ConsumerID: budi.ID, TenorMonths: 3, CreditLimit: 5000000},
+		{ConsumerID: budi.ID, TenorMonths: 6, CreditLimit: 8000000},
 	}
 
 	// Buat semua limit kredit dalam satu batch.
