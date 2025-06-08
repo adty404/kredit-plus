@@ -30,7 +30,6 @@ func Run(db *gorm.DB) {
 	log.Println("Seeder finished successfully.")
 }
 
-// createAdminUser membuat pengguna dengan peran 'admin' jika belum ada.
 func createAdminUser(db *gorm.DB) error {
 	adminEmail := "admin@kreditplus.com"
 	var existingUser domain.User
@@ -58,7 +57,6 @@ func createAdminUser(db *gorm.DB) error {
 	return nil
 }
 
-// createUserIfNotExists adalah helper untuk membuat user dan mengembalikan ID-nya.
 func createUserIfNotExists(db *gorm.DB, fullName, email, password, role string) (uint, error) {
 	var existingUser domain.User
 	err := db.Where("email = ?", email).First(&existingUser).Error

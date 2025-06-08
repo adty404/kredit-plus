@@ -23,6 +23,7 @@ run:
 run-seed:
 	@echo "Running the application with seed data..."
 	@go run $(MAIN_FILE) --seed
+# docker-compose exec app ./kredit-app --seed
 
 # Build aplikasi
 build:
@@ -68,10 +69,14 @@ migrate-up:
 	@echo "Running database migrations up..."
 	@migrate -database "$(DATABASE_URL)" -path $(MIGRATION_PATH) up
 
+# docker-compose exec app migrate -database "postgres://postgres:root@db:5432/kredit_plus?sslmode=disable" -path migrations up
+
 # Menjalankan migrasi DOWN
 migrate-down:
 	@echo "Rolling back last migration..."
 	@migrate -database "$(DATABASE_URL)" -path migrations down 1
+
+# docker-compose exec app migrate -database "postgres://postgres:root@db:5432/kredit_plus?sslmode=disable" -path migrations down 1
 
 # Membuat file migrasi baru
 # Cara penggunaan: make migrate-create name=nama_migrasi_anda
