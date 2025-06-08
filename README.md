@@ -49,13 +49,10 @@ Proyek ini mengadopsi prinsip **Clean Architecture** dengan lapisan-lapisan seba
 
 ## 📖 Dokumentasi API
 
-Dokumentasi lengkap untuk semua endpoint API, termasuk contoh request dan response, tersedia di Postman. Anda bisa mengaksesnya melalui link di bawah ini atau menggunakan tombol "Run in Postman" untuk mengimpor koleksi secara otomatis.
+Dokumentasi lengkap untuk semua endpoint API, termasuk contoh request dan response, tersedia di Postman. Anda bisa mengaksesnya melalui link di bawah ini.
 
 * **Link Dokumentasi**: [https://documenter.getpostman.com/view/10117768/2sB2x3nDD5](https://documenter.getpostman.com/view/10117768/2sB2x3nDD5)
-
-* **Impor ke Postman**:
-    [![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/10117768-e616fbf7-60dd-4c31-8477-1c0047f4c86c?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D10117768-e616fbf7-60dd-4c31-8477-1c0047f4c86c%26entityType%3Dcollection%26workspaceId%3De3cd9655-6329-4230-89ad-67045dc47fd7)
-
+  
 
 ## 🚀 Cara Menjalankan dengan Docker
 
