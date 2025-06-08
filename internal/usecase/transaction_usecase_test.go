@@ -10,7 +10,6 @@ import (
 	"testing"
 )
 
-// setupMocksAndDb membuat instance mock untuk semua repository dan db GORM palsu untuk testing.
 func setupMocksAndDb(t *testing.T) (
 	*gorm.DB,
 	sqlmock.Sqlmock,

@@ -8,13 +8,11 @@ import (
 	"strconv"
 )
 
-// TransactionHandler sekarang memiliki dependensi ke consumerRepo untuk validasi akses.
 type TransactionHandler struct {
 	uc           usecase.TransactionUsecase
 	consumerRepo domain.ConsumerRepository // Dependensi baru
 }
 
-// NewTransactionHandler diperbarui untuk menerima dependensi baru.
 func NewTransactionHandler(uc usecase.TransactionUsecase, consumerRepo domain.ConsumerRepository) *TransactionHandler {
 	return &TransactionHandler{
 		uc:           uc,
@@ -22,7 +20,6 @@ func NewTransactionHandler(uc usecase.TransactionUsecase, consumerRepo domain.Co
 	}
 }
 
-// CreateTransaction sekarang memiliki validasi kontrol akses.
 func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	// Ambil consumer ID dari parameter URL.
 	idStr := c.Param("id")
@@ -37,7 +34,6 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	loggedInUserRole := c.GetString("userRole")
 
 	// --- VALIDASI KONTROL AKSES ---
-	// Jika yang login bukan admin, pastikan dia hanya membuat transaksi untuk dirinya sendiri.
 	if loggedInUserRole != "admin" {
 		// Cari profil consumer yang terhubung dengan user yang sedang login.
 		consumer, err := h.consumerRepo.FindByUserID(loggedInUserID)
@@ -49,9 +45,7 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 			return
 		}
 	}
-	// -----------------------------
 
-	// Jika validasi lolos, lanjutkan proses...
 	var input usecase.CreateTransactionInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data", "details": err.Error()})
@@ -67,7 +61,6 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Transaction created successfully", "data": transaction})
 }
 
-// GetTransactionsByConsumerID juga memerlukan validasi kontrol akses.
 func (h *TransactionHandler) GetTransactionsByConsumerID(c *gin.Context) {
 	idStr := c.Param("id")
 	consumerIDFromURL, err := strconv.ParseUint(idStr, 10, 32)

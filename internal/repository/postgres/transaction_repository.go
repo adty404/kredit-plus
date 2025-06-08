@@ -9,7 +9,6 @@ type transactionRepository struct {
 	db *gorm.DB
 }
 
-// NewTransactionRepository adalah factory function untuk membuat instance baru transactionRepository.
 func NewTransactionRepository(db *gorm.DB) domain.TransactionRepository {
 	return &transactionRepository{db: db}
 }

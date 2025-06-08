@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// ConsumerUsecase mendefinisikan contract untuk logika bisnis yang berhubungan dengan konsumen.
 type ConsumerUsecase interface {
 	CreateConsumer(input CreateConsumerInput) (*domain.Consumer, error)
 	GetAllConsumers() ([]*domain.Consumer, error)
@@ -18,14 +17,12 @@ type ConsumerUsecase interface {
 	DeleteConsumer(id uint) error
 }
 
-// consumerUsecase sekarang memiliki dependensi ke db dan userRepo.
 type consumerUsecase struct {
 	db       *gorm.DB
 	repo     domain.ConsumerRepository
 	userRepo domain.UserRepository
 }
 
-// NewConsumerUsecase di-update untuk menerima dependensi baru.
 func NewConsumerUsecase(db *gorm.DB, repo domain.ConsumerRepository, userRepo domain.UserRepository) ConsumerUsecase {
 	return &consumerUsecase{
 		db:       db,
@@ -34,7 +31,6 @@ func NewConsumerUsecase(db *gorm.DB, repo domain.ConsumerRepository, userRepo do
 	}
 }
 
-// CreateConsumer sekarang membuat User dan Consumer dalam satu transaksi.
 func (uc *consumerUsecase) CreateConsumer(input CreateConsumerInput) (*domain.Consumer, error) {
 	var createdConsumer *domain.Consumer
 

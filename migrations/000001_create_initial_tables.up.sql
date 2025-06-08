@@ -1,6 +1,6 @@
 -- Migrations UP
 
--- Tabel users (ditambahkan)
+-- Tabel users
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,

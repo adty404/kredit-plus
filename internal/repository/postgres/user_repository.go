@@ -9,7 +9,6 @@ type userRepository struct {
 	db *gorm.DB
 }
 
-// NewUserRepository adalah factory function untuk membuat instance baru userRepository.
 func NewUserRepository(db *gorm.DB) domain.UserRepository {
 	return &userRepository{db: db}
 }
