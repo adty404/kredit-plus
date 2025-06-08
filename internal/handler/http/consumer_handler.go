@@ -19,7 +19,6 @@ func NewConsumerHandler(uc usecase.ConsumerUsecase) *ConsumerHandler {
 	return &ConsumerHandler{consumerUsecase: uc}
 }
 
-// CreateConsumer menangani pembuatan konsumen baru dengan upload file.
 func (h *ConsumerHandler) CreateConsumer(c *gin.Context) {
 	var input usecase.CreateConsumerFormInput
 	if err := c.ShouldBind(&input); err != nil {
@@ -82,7 +81,6 @@ func (h *ConsumerHandler) GetAllConsumers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": consumers})
 }
 
-// GetConsumerByID menangani permintaan untuk mendapatkan satu konsumen berdasarkan ID.
 func (h *ConsumerHandler) GetConsumerByID(c *gin.Context) {
 	// Ambil ID dari URL
 	idStr := c.Param("id")
@@ -93,18 +91,14 @@ func (h *ConsumerHandler) GetConsumerByID(c *gin.Context) {
 	loggedInUserRole := c.GetString("userRole")
 
 	// --- LOGIKA KONTROL AKSES ---
-	// Jika yang login bukan admin, kita harus pastikan dia hanya mengakses datanya sendiri.
 	if loggedInUserRole != "admin" {
-		// Cari data consumer berdasarkan user ID yang login
 		consumer, err := h.consumerUsecase.GetConsumerByUserID(loggedInUserID)
 		if err != nil || consumer.ID != uint(id) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "You are not authorized to view this consumer"})
 			return
 		}
 	}
-	// ---------------------------
 
-	// Jika validasi lolos, lanjutkan mengambil data
 	consumer, err := h.consumerUsecase.GetConsumerByID(uint(id))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -118,7 +112,6 @@ func (h *ConsumerHandler) GetConsumerByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": consumer})
 }
 
-// UpdateConsumer menangani pembaruan data konsumen.
 func (h *ConsumerHandler) UpdateConsumer(c *gin.Context) {
 	// ambil ID dari URL parameter
 	idStr := c.Param("id")
@@ -133,7 +126,6 @@ func (h *ConsumerHandler) UpdateConsumer(c *gin.Context) {
 	loggedInUserRole := c.GetString("userRole")
 
 	// --- LOGIKA KONTROL AKSES ---
-	// Jika yang login bukan admin, kita harus pastikan dia hanya mengakses datanya sendiri.
 	if loggedInUserRole != "admin" {
 		// Cari data consumer berdasarkan user ID yang login
 		consumer, err := h.consumerUsecase.GetConsumerByUserID(loggedInUserID)
@@ -142,7 +134,6 @@ func (h *ConsumerHandler) UpdateConsumer(c *gin.Context) {
 			return
 		}
 	}
-	// ---------------------------
 
 	// Bind input JSON ke struct UpdateConsumerInput
 	var input usecase.UpdateConsumerInput
