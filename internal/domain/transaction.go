@@ -2,7 +2,6 @@ package domain
 
 import "time"
 
-// Transaction merepresentasikan entitas transaksi/kontrak kredit.
 type Transaction struct {
 	ID                       uint      `gorm:"primarykey"`
 	ConsumerID               uint      `gorm:"not null"`

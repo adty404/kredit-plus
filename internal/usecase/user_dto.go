@@ -1,6 +1,5 @@
 package usecase
 
-// DTOs untuk User
 type RegisterUserInput struct {
 	FullName string `json:"full_name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
