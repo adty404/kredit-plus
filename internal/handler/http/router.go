@@ -43,6 +43,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	consumerRepo := postgres.NewConsumerRepository(db)
 	consumerCreditLimitRepo := postgres.NewConsumerCreditLimitRepository(db)
 	transactionRepo := postgres.NewTransactionRepository(db)
+	userRepo := postgres.NewUserRepository(db)
 
 	// Usecase
 	consumerUsecase := usecase.NewConsumerUsecase(consumerRepo)
@@ -51,10 +52,12 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		consumerRepo,
 	)
 	transactionUsecase := usecase.NewTransactionUsecase(
+		db,
 		transactionRepo,
 		consumerRepo,
 		consumerCreditLimitRepo,
 	)
+	userUsecase := usecase.NewUserUsecase(userRepo)
 
 	// Handler
 	consumerHandler := NewConsumerHandler(consumerUsecase)
@@ -63,10 +66,17 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		consumerUsecase,
 	)
 	transactionHandler := NewTransactionHandler(transactionUsecase)
+	userHandler := NewUserHandler(userUsecase)
 
 	// === Pendaftaran Rute API ===
 	api := router.Group("/api/v1")
 	{
+		authRoutes := api.Group("/auth")
+		{
+			authRoutes.POST("/register", userHandler.Register)
+			authRoutes.POST("/login", userHandler.Login)
+		}
+
 		consumerRoutes := api.Group("/consumers")
 		{
 			// Rute utama untuk consumers
@@ -76,8 +86,10 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 			consumerRoutes.PUT("/:id", consumerHandler.UpdateConsumer)
 			consumerRoutes.DELETE("/:id", consumerHandler.DeleteConsumer)
 
+			// Rute untuk Credit Limit
 			consumerRoutes.POST("/:id/limits", consumerCreditLimitHandler.CreateLimitForConsumer)
 
+			// Rute untuk Transactions
 			consumerRoutes.POST("/:id/transactions", transactionHandler.CreateTransaction)
 			consumerRoutes.GET("/:id/transactions", transactionHandler.GetTransactionsByConsumerID)
 		}
