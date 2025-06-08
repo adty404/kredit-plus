@@ -14,6 +14,7 @@ func Run(db *gorm.DB) error {
 		&domain.Consumer{},
 		&domain.ConsumerCreditLimit{},
 		&domain.Transaction{},
+		&domain.User{},
 	)
 
 	if err != nil {

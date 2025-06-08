@@ -8,23 +8,20 @@ import (
 	"time"
 )
 
-// TransactionUsecase mendefinisikan contract untuk logika bisnis transaksi.
 type TransactionUsecase interface {
 	CreateTransaction(consumerID uint, input CreateTransactionInput) (*domain.Transaction, error)
 	GetTransactionsByConsumerID(consumerID uint) ([]*domain.Transaction, error)
 }
 
-// transactionUsecase adalah implementasi dari TransactionUsecase.
 type transactionUsecase struct {
-	db              *gorm.DB // Koneksi GORM utama untuk mengelola transaksi
+	db              *gorm.DB
 	transactionRepo domain.TransactionRepository
 	consumerRepo    domain.ConsumerRepository
 	creditLimitRepo domain.ConsumerCreditLimitRepository
 }
 
-// NewTransactionUsecase adalah factory function untuk membuat instance transactionUsecase.
 func NewTransactionUsecase(
-	db *gorm.DB, // Terima koneksi GORM utama
+	db *gorm.DB,
 	transactionRepo domain.TransactionRepository,
 	consumerRepo domain.ConsumerRepository,
 	creditLimitRepo domain.ConsumerCreditLimitRepository,

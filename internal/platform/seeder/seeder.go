@@ -1,6 +1,7 @@
 package seeder
 
 import (
+	"errors"
 	"github.com/adty404/kredit-plus/internal/domain"
 	"gorm.io/gorm"
 	"log"
@@ -11,6 +12,11 @@ import (
 func Run(db *gorm.DB) {
 	log.Println("Running database seeder...")
 
+	// Jalankan seeder untuk admin user
+	if err := createAdminUser(db); err != nil {
+		log.Fatalf("Failed to seed admin user: %v", err)
+	}
+
 	if err := createBudi(db); err != nil {
 		log.Fatalf("Failed to seed Budi's data: %v", err)
 	}
@@ -20,6 +26,45 @@ func Run(db *gorm.DB) {
 	}
 
 	log.Println("Seeder finished successfully.")
+}
+
+// createAdminUser membuat pengguna dengan peran 'admin' jika belum ada.
+func createAdminUser(db *gorm.DB) error {
+	adminEmail := "admin@kreditplus.com"
+
+	// Cek apakah user admin sudah ada
+	var existingUser domain.User
+	err := db.Where("email = ?", adminEmail).First(&existingUser).Error
+	// Jika user sudah ada, tidak perlu melakukan apa-apa.
+	if err == nil {
+		log.Printf("Admin user with email '%s' already exists. Skipping.\n", adminEmail)
+		return nil
+	}
+
+	// Jika error yang muncul bukan karena 'record not found', maka ada masalah lain.
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	// Jika belum ada, buat user admin baru
+	adminUser := &domain.User{
+		FullName: "Admin Kredit Plus",
+		Email:    adminEmail,
+		Role:     "admin",
+	}
+
+	// Hash password sebelum disimpan
+	if err := adminUser.HashPassword("password123"); err != nil {
+		return err
+	}
+
+	// Simpan user baru ke database
+	if err := db.Create(adminUser).Error; err != nil {
+		return err
+	}
+
+	log.Printf("Successfully seeded admin user with email '%s'\n", adminEmail)
+	return nil
 }
 
 // createBudi membuat data untuk konsumen Budi beserta limit kreditnya.
