@@ -35,6 +35,16 @@ func (m *MockConsumerRepository) Update(id uint, updates map[string]interface{})
 	return args.Error(0)
 }
 
+func (m *MockConsumerRepository) FindByUserID(userID uint) (*domain.Consumer, error) {
+	args := m.Called(userID)
+	// Cek apakah ada objek consumer yang dikembalikan
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	// Kembalikan objek consumer dan error
+	return args.Get(0).(*domain.Consumer), args.Error(1)
+}
+
 func (m *MockConsumerRepository) FindByID(id uint) (*domain.Consumer, error) {
 	args := m.Called(id)
 	// Cek apakah ada objek consumer yang dikembalikan

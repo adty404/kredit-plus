@@ -1,8 +1,10 @@
 package usecase
 
 import (
+	"errors"
 	"fmt"
 	"github.com/adty404/kredit-plus/internal/domain"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -10,78 +12,126 @@ import (
 type ConsumerUsecase interface {
 	CreateConsumer(input CreateConsumerInput) (*domain.Consumer, error)
 	GetAllConsumers() ([]*domain.Consumer, error)
+	GetConsumerByUserID(userID uint) (*domain.Consumer, error)
 	GetConsumerByID(id uint) (*domain.Consumer, error)
 	UpdateConsumer(id uint, input UpdateConsumerInput) (*domain.Consumer, error)
 	DeleteConsumer(id uint) error
 }
 
-// consumerUsecase adalah implementasi dari ConsumerUsecase.
+// consumerUsecase sekarang memiliki dependensi ke db dan userRepo.
 type consumerUsecase struct {
-	repo domain.ConsumerRepository
+	db       *gorm.DB
+	repo     domain.ConsumerRepository
+	userRepo domain.UserRepository
 }
 
-// NewConsumerUsecase adalah factory function untuk membuat instance baru dari consumerUsecase.
-// Ini menerima ConsumerRepository sebagai dependency.
-func NewConsumerUsecase(repo domain.ConsumerRepository) ConsumerUsecase {
-	return &consumerUsecase{repo: repo}
+// NewConsumerUsecase di-update untuk menerima dependensi baru.
+func NewConsumerUsecase(db *gorm.DB, repo domain.ConsumerRepository, userRepo domain.UserRepository) ConsumerUsecase {
+	return &consumerUsecase{
+		db:       db,
+		repo:     repo,
+		userRepo: userRepo,
+	}
 }
 
-// CreateConsumer berisi logika untuk membuat konsumen baru.
+// CreateConsumer sekarang membuat User dan Consumer dalam satu transaksi.
 func (uc *consumerUsecase) CreateConsumer(input CreateConsumerInput) (*domain.Consumer, error) {
-	// Logika bisnis 1: Cek apakah NIK sudah ada.
-	existingConsumer, _ := uc.repo.FindByNIK(input.Nik)
-	if existingConsumer != nil {
-		return nil, fmt.Errorf("consumer with NIK %s already exists", input.Nik)
-	}
+	var createdConsumer *domain.Consumer
 
-	// Parsing tanggal lahir dari string ke time.Time
-	dob, err := time.Parse("2006-01-02", input.TanggalLahir)
+	// Membungkus seluruh operasi dalam sebuah transaksi database.
+	err := uc.db.Transaction(
+		func(tx *gorm.DB) error {
+			// Gunakan repository dengan koneksi transaksi (tx)
+			userRepoTx := uc.userRepo.WithTx(tx)
+			consumerRepoTx := uc.repo.WithTx(tx)
+
+			// 1. Validasi: Cek apakah email sudah terdaftar
+			_, err := userRepoTx.FindByEmail(input.Email)
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("email '%s' already registered", input.Email)
+			}
+
+			// 2. Validasi: Cek apakah NIK sudah terdaftar
+			_, err = consumerRepoTx.FindByNIK(input.Nik)
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("consumer with NIK %s already exists", input.Nik)
+			}
+
+			// 3. Buat User baru
+			newUser := &domain.User{
+				FullName: input.FullName,
+				Email:    input.Email,
+				Role:     "consumer",
+			}
+			if err := newUser.HashPassword(input.Password); err != nil {
+				return err
+			}
+			if err := userRepoTx.Save(newUser); err != nil {
+				return err
+			}
+
+			// 4. Buat Consumer baru dan tautkan UserID
+			dob, err := time.Parse("2006-01-02", input.TanggalLahir)
+			if err != nil {
+				return fmt.Errorf("invalid date format for tanggal_lahir, please use yyyy-MM-dd")
+			}
+			jsonDob := domain.JSONDate(dob)
+
+			consumer := &domain.Consumer{
+				UserID:             newUser.ID, // Link ke user yang baru dibuat
+				Nik:                input.Nik,
+				FullName:           input.FullName,
+				LegalName:          input.LegalName,
+				TempatLahir:        input.TempatLahir,
+				TanggalLahir:       &jsonDob,
+				Gaji:               input.Gaji,
+				OverallCreditLimit: input.OverallCreditLimit,
+				FotoKtp:            input.FotoKtpPath,
+				FotoSelfie:         input.FotoSelfiePath,
+			}
+
+			if err := consumerRepoTx.Save(consumer); err != nil {
+				return err
+			}
+
+			createdConsumer = consumer
+			return nil // Commit transaksi jika tidak ada error
+		},
+	)
+
 	if err != nil {
-		return nil, fmt.Errorf("invalid date format for tanggal_lahir, please use yyyy-MM-dd")
-	}
-
-	jsonDob := domain.JSONDate(dob)
-
-	// Membuat objek domain.Consumer baru dari input.
-	consumer := &domain.Consumer{
-		Nik:                input.Nik,
-		FullName:           input.FullName,
-		LegalName:          input.LegalName,
-		TempatLahir:        input.TempatLahir,
-		TanggalLahir:       &jsonDob,
-		Gaji:               input.Gaji,
-		OverallCreditLimit: input.OverallCreditLimit,
-		FotoKtp:            input.FotoKtpPath,
-		FotoSelfie:         input.FotoSelfiePath,
-	}
-
-	if err := uc.repo.Save(consumer); err != nil {
 		return nil, err
 	}
-	return consumer, nil
+
+	return createdConsumer, nil
 }
 
 // GetAllConsumers mengambil semua data konsumen.
 func (uc *consumerUsecase) GetAllConsumers() ([]*domain.Consumer, error) {
-	// Langsung memanggil repository karena tidak ada logika bisnis tambahan.
 	return uc.repo.FindAll()
+}
+
+// GetConsumerByUserID mengambil konsumen berdasarkan ID pengguna.
+func (uc *consumerUsecase) GetConsumerByUserID(userID uint) (*domain.Consumer, error) {
+	consumer, err := uc.repo.FindByUserID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("consumer not found for user ID %d: %w", userID, err)
+	}
+	return consumer, nil
 }
 
 // GetConsumerByID mengambil satu konsumen berdasarkan ID.
 func (uc *consumerUsecase) GetConsumerByID(id uint) (*domain.Consumer, error) {
-	// Langsung memanggil repository.
 	return uc.repo.FindByID(id)
 }
 
 // DeleteConsumer menghapus seorang konsumen.
 func (uc *consumerUsecase) DeleteConsumer(id uint) error {
-	// Cek dulu apakah konsumen ada.
 	_, err := uc.repo.FindByID(id)
 	if err != nil {
 		return err // Mengembalikan error jika tidak ditemukan
 	}
 
-	// Panggil repository untuk menghapus.
 	return uc.repo.Delete(id)
 }
 
