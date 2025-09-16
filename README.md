@@ -2,7 +2,7 @@
 
 Selamat datang di repositori Aplikasi Kredit Plus. Ini adalah layanan backend yang dibangun menggunakan Go (Golang) untuk mensimulasikan sistem aplikasi kredit sederhana. Proyek ini dibangun dengan prinsip Clean Architecture untuk memastikan kode yang bersih, mudah diuji, dan dapat dipelihara.
 
-Aplikasi ini mencakup fungsionalitas inti seperti manajemen konsumen, penetapan limit kredit, pembuatan transaksi, dan sistem otentikasi yang aman. 
+Aplikasi ini mencakup fungsionalitas inti seperti manajemen konsumen, penetapan limit kredit, pembuatan transaksi, dan sistem otentikasi yang aman.
 
 ## ✨ Fitur Utama
 
